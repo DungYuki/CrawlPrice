@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
+using System;
 using System.Text.RegularExpressions;
 
 namespace GetPriceUrl.Controllers
@@ -19,14 +20,12 @@ namespace GetPriceUrl.Controllers
         }
 
         [HttpGet("get-price")]
-        public async Task<IActionResult> GetPrice(string url)
+        public async Task<IActionResult> GetPrice([FromQuery] List<string> urls )
         {
-            var urls = new List<string> { url };
-
             await _browserService.DownloadAsync();
             var browser = await _browserService.LaunchAsync(new LaunchOptions
             {
-                Headless = false
+                Headless = true
             });
 
             string RegexPrice(string price)
