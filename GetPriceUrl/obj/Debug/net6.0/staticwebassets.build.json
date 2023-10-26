@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "G4CVTWMhpvdSY2/YkNGFhCojJOclkw8BFJI7YzCjvYw=",
+  "Source": "GetPriceUrl",
+  "BasePath": "_content/GetPriceUrl",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
