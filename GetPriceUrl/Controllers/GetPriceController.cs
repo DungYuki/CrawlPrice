@@ -1,10 +1,18 @@
-﻿using GetPriceUrl.Service;
+﻿using GetPriceUrl.Dtos;
+using GetPriceUrl.Infrastructure;
+using GetPriceUrl.Infrastructure.Models;
+using GetPriceUrl.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
 using System;
+using System.Diagnostics;
+using System.IO.Pipelines;
 using System.Text.RegularExpressions;
+using GetPriceUrl.Helpers;
+using System.Collections.Generic;
 
 namespace GetPriceUrl.Controllers
 {
@@ -12,45 +20,52 @@ namespace GetPriceUrl.Controllers
     [ApiController]
     public class GetPriceController : ControllerBase
     {
-        private readonly IBrowserService _browserService;
+        private readonly PriceCrawlService _priceCrawlService;
+        private readonly LaptopPriceDbContext _dbcontext;
+        private readonly UpdatePriceDbService _updatePriceDbService;
 
-        public GetPriceController(IBrowserService browserService)
+        public GetPriceController(LaptopPriceDbContext dbcontext, 
+                                  PriceCrawlService priceCrawlService,
+                                  UpdatePriceDbService updatePriceDbService)
         {
-            _browserService = browserService;
+            _dbcontext = dbcontext;
+            _priceCrawlService = priceCrawlService;
+            _updatePriceDbService = updatePriceDbService;
         }
 
-        [HttpGet("get-price")]
-        public async Task<IActionResult> GetPrice([FromQuery] List<string> urls )
+        [HttpGet("test-get-db")]
+        public async Task<IActionResult> GetURL()
         {
-            await _browserService.DownloadAsync();
-            var browser = await _browserService.LaunchAsync(new LaunchOptions
+            var data = _dbcontext.Set<LaptopURL>().Select(x => new CrawlReq
             {
-                Headless = true
-            });
+                LaptopURLID = x.LaptopURLID,
+                URL = x.URL
+            }).ToList();
 
-            string RegexPrice(string price)
+            var result = await GetPrice(data);
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPrice(List<CrawlReq> reqs)
+        {
+            List<string> urls = reqs.Select(x => x.URL).ToList();
+
+            var urlPriceMap = await _priceCrawlService.CrawlPricesAsync(urls);
+
+            foreach (var req in reqs)
             {
-                return Regex.Replace(price, "[^0-9]", "");
+                string crawlPrice = urlPriceMap[req.URL];
+
+                req.Price = crawlPrice;
             }
 
-            List<string> prices = new List<string>();
+            var result = await _updatePriceDbService.UpdatePrices(reqs);
 
-            await Parallel.ForEachAsync(urls, async (url, token) =>
-            {
-                var page = await browser.NewPageAsync();
-                await page.GoToAsync(url);
+            return Ok(result);
 
-                string selector = SelectorByDomain._selector.FirstOrDefault(entry => url.Contains(entry.Key)).Value; ;
-                var priceNode = await page.QuerySelectorAsync(selector);
-
-                string price = await page.EvaluateFunctionAsync<string>("element => element.textContent", priceNode);
-
-                await page.CloseAsync();
-
-                prices.Add(RegexPrice(price));
-            });
-
-            return Ok(prices);
         }
+        
     }
 }
