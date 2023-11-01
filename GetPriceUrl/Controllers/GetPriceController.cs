@@ -22,15 +22,15 @@ namespace GetPriceUrl.Controllers
     {
         private readonly PriceCrawlService _priceCrawlService;
         private readonly LaptopPriceDbContext _dbcontext;
-        private readonly UpdatePriceDbService _updatePriceDbService;
+        private readonly LaptopUrlService _laptopUrlService;
 
         public GetPriceController(LaptopPriceDbContext dbcontext, 
                                   PriceCrawlService priceCrawlService,
-                                  UpdatePriceDbService updatePriceDbService)
+                                  LaptopUrlService laptopUrlService)
         {
             _dbcontext = dbcontext;
             _priceCrawlService = priceCrawlService;
-            _updatePriceDbService = updatePriceDbService;
+            _laptopUrlService = laptopUrlService;
         }
 
         [HttpGet("test-get-db")]
@@ -61,7 +61,7 @@ namespace GetPriceUrl.Controllers
                 req.Price = crawlPrice;
             }
 
-            var result = await _updatePriceDbService.UpdatePrices(reqs);
+            var result = await _laptopUrlService.UpdateLaptopURLPrice(reqs);
 
             return Ok(result);
 

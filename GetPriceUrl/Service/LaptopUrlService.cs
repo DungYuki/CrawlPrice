@@ -6,16 +6,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GetPriceUrl.Service
 {
-    public class UpdatePriceDbService
+    public class LaptopUrlService
     {
+        
         private readonly LaptopPriceDbContext _dbcontext;
 
-        public UpdatePriceDbService(LaptopPriceDbContext dbcontext)
+        public LaptopUrlService(LaptopPriceDbContext dbcontext)
         {
             _dbcontext = dbcontext;
         }
 
-        public async Task<bool> UpdatePrices(List<CrawlReq> reqs)
+        public async Task<List<CrawlReq>> GetLaptopURL()
+        {
+            return await _dbcontext.Set<LaptopURL>()
+                           .Select(x => new CrawlReq
+                           {
+                               LaptopURLID = x.LaptopURLID,
+                               URL = x.URL
+                           })
+                           .ToListAsync();
+        }
+
+        public async Task<bool> UpdateLaptopURLPrice(List<CrawlReq> reqs)
         {
             try
             {
@@ -42,5 +54,16 @@ namespace GetPriceUrl.Service
                 return false;
             }
         }
+
+        public Task GetCheapestLaptop() 
+        {
+            
+        }
+        public Task GetExpensiveLaptop()
+        {
+            
+        }
+        
+
     }
 }
