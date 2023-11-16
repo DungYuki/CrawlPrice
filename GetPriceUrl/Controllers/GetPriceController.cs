@@ -36,35 +36,22 @@ namespace GetPriceUrl.Controllers
         [HttpGet("test-get-db")]
         public async Task<IActionResult> GetURL()
         {
-            var data = _dbcontext.Set<LaptopURL>().Select(x => new CrawlReq
-            {
-                LaptopURLID = x.LaptopURLID,
-                URL = x.URL
-            }).ToList();
+            var data = await _laptopUrlService.GetLaptopURL();
 
-            var result = await GetPrice(data);
-
-            return Ok(result);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetPrice(List<CrawlReq> reqs)
-        {
-            List<string> urls = reqs.Select(x => x.URL).ToList();
+            List<string> urls = data.Select(x => x.URL).ToList();
 
             var urlPriceMap = await _priceCrawlService.CrawlPricesAsync(urls);
 
-            foreach (var req in reqs)
+            foreach (var laptop in data)
             {
-                string crawlPrice = urlPriceMap[req.URL];
+                string crawlPrice = urlPriceMap[laptop.URL];
 
-                req.Price = crawlPrice;
+                laptop.Price = crawlPrice;
             }
 
-            var result = await _laptopUrlService.UpdateLaptopURLPrice(reqs);
+            var result = await _laptopUrlService.UpdateLaptopURLPrice(data);
 
             return Ok(result);
-
         }
         
     }
